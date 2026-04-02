@@ -150,7 +150,7 @@ async function authMiddleware(req, res, next) {
 
 // ─── App ──────────────────────────────────────────────────────────────────────
 const app = express()
-app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:3000' }))
+app.use(cors({ origin: '*' })) // Allow all origins to fix custom domain CORS issues
 app.use(express.json())
 
 // ─── Records Routes ───────────────────────────────────────────────────────────
