@@ -9,10 +9,25 @@ const path = require('path')
 
 // ─── Firebase Admin ───────────────────────────────────────────────────────────
 let serviceAccount
-try {
-    serviceAccount = require(process.env.FIREBASE_SERVICE_ACCOUNT_PATH || './serviceAccountKey.json')
-} catch {
-    console.warn('[Firebase] serviceAccountKey.json not found. Using env vars.')
+const base64Key = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64
+
+if (base64Key) {
+    try {
+        const decoded = Buffer.from(base64Key, 'base64').toString('utf-8')
+        serviceAccount = JSON.parse(decoded)
+        console.log('[Firebase] Initialized using Base64 environment variable')
+    } catch (err) {
+        console.error('[Firebase] Failed to decode FIREBASE_SERVICE_ACCOUNT_BASE64')
+    }
+}
+
+if (!serviceAccount) {
+    try {
+        serviceAccount = require(process.env.FIREBASE_SERVICE_ACCOUNT_PATH || './serviceAccountKey.json')
+        console.log('[Firebase] Initialized using local serviceAccountKey.json')
+    } catch {
+        console.warn('[Firebase] No service account file found. Falling back to individual env vars.')
+    }
 }
 
 admin.initializeApp({
