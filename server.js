@@ -51,7 +51,8 @@ let waConnected = false
  * Automagically clear stale Chromium lock files to prevent "profile in use" errors.
  */
 function deleteStaleLocks(clientId) {
-    const sessionPath = path.join(__dirname, '.wwebjs_auth', `session-${clientId}`)
+    const authDir = process.env.WWEBJS_AUTH_DIR || path.join(__dirname, '.wwebjs_auth')
+    const sessionPath = path.join(authDir, `session-${clientId}`)
     const lockFiles = ['SingletonLock', 'SingletonSocket', 'SingletonCookie']
     
     lockFiles.forEach(file => {
@@ -77,7 +78,10 @@ async function createWAClient(clientId = 'motomind') {
     deleteStaleLocks(clientId)
 
     const client = new Client({
-        authStrategy: new LocalAuth({ clientId }),
+        authStrategy: new LocalAuth({ 
+            clientId,
+            dataPath: process.env.WWEBJS_AUTH_DIR || path.join(__dirname, '.wwebjs_auth')
+        }),
         puppeteer: {
             handleSIGINT: false,
             args: [
