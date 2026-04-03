@@ -89,12 +89,8 @@ async function createWAClient(clientId = 'motomind') {
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
                 '--disable-dev-shm-usage',
-                '--disable-extensions',
-                '--no-first-run',
-                '--no-zygote',
-                '--disable-gpu',
                 '--disable-accelerated-2d-canvas',
-                '--single-process'
+                '--no-first-run'
             ],
         },
     })
