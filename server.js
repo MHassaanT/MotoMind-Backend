@@ -341,22 +341,42 @@ app.post('/api/wa/send-reminder/:id', authMiddleware, async (req, res) => {
             return res.status(400).json({ error: 'Reminder already sent for this record' })
         }
 
+        // Defensive check for message variables
+        const name = r.name || 'Customer'
+        const bikeType = r.bikeType || 'Bike'
+        const workshopName = req.displayName || 'Workshop'
+        const kmReading = r.kmReading ? Number(r.kmReading).toLocaleString() : '0'
+
         const message =
-            `Hello ${r.name}! 🏍️\n\n` +
-            `Your *${r.bikeType}* was last serviced at *${req.displayName}* on *${r.currentDate}* ` +
-            `with a mileage of *${Number(r.kmReading).toLocaleString()} km*.\n\n` +
-            `Your next service is due on *${r.nextServiceDate}*. ` +
+            `Hello ${name}! 🏍️\n\n` +
+            `Your *${bikeType}* was last serviced at *${workshopName}* on *${r.currentDate || 'N/A'}* ` +
+            `with a mileage of *${kmReading} km*.\n\n` +
+            `Your next service is due on *${r.nextServiceDate || 'N/A'}*. ` +
             `Please visit us for a checkup! 🔧\n\n` +
-            `_${req.displayName}_`
+            `_${workshopName}_`
 
-        // Format phone: remove spaces/dashes, ensure @c.us suffix
-        let phone = r.phone.replace(/[\s\-\(\)]/g, '')
-        if (!phone.startsWith('+')) phone = '+' + phone
-        phone = phone.replace('+', '') + '@c.us'
+        // Format phone: remove non-digits
+        let cleanPhone = r.phone.replace(/\D/g, '')
+        
+        // Fallback for local Pakistani numbers if no country code provided
+        if (cleanPhone.startsWith('0') && cleanPhone.length === 11) {
+            cleanPhone = '92' + cleanPhone.substring(1)
+        }
+        
+        // Resolve the actual WhatsApp JID
+        let phoneJid = `${cleanPhone}@c.us`
+        try {
+            const numberId = await client.getNumberId(cleanPhone)
+            if (numberId) {
+                phoneJid = numberId._serialized
+            }
+        } catch (err) {
+            console.warn(`[WA] Could not resolve numberId for ${cleanPhone}, using fallback.`)
+        }
 
-        console.log(`[WA] Preparing to send message to ${phone}...`)
-        await client.sendMessage(phone, message)
-        console.log(`[WA] Message sent successfully to ${phone}`)
+        console.log(`[WA] Preparing to send message to ${phoneJid}...`)
+        await client.sendMessage(phoneJid, message)
+        console.log(`[WA] Message sent successfully to ${phoneJid}`)
 
         // Mark as sent so it cannot be sent again
         await ref.update({ reminderSent: true, reminderSentAt: new Date().toISOString() })
