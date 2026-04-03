@@ -83,6 +83,7 @@ async function createWAClient(clientId = 'motomind') {
             dataPath: process.env.WWEBJS_AUTH_DIR || path.join(__dirname, '.wwebjs_auth')
         }),
         puppeteer: {
+            headless: true,
             handleSIGINT: false,
             args: [
                 '--no-sandbox',
