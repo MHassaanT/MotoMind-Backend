@@ -1,4 +1,10 @@
 require('dotenv').config()
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('[CRASH] Unhandled Rejection at:', promise, 'reason:', reason);
+});
+process.on('uncaughtException', (err) => {
+    console.error('[CRASH] Uncaught Exception:', err);
+});
 const express = require('express')
 const cors = require('cors')
 const admin = require('firebase-admin')
@@ -90,7 +96,10 @@ async function createWAClient(clientId = 'motomind') {
                 '--disable-setuid-sandbox',
                 '--disable-dev-shm-usage',
                 '--disable-accelerated-2d-canvas',
-                '--no-first-run'
+                '--no-first-run',
+                '--no-zygote',
+                '--single-process',
+                '--disable-gpu'
             ],
         },
     })
@@ -345,13 +354,17 @@ app.post('/api/wa/send-reminder/:id', authMiddleware, async (req, res) => {
         if (!phone.startsWith('+')) phone = '+' + phone
         phone = phone.replace('+', '') + '@c.us'
 
+        console.log(`[WA] Preparing to send message to ${phone}...`)
         await client.sendMessage(phone, message)
+        console.log(`[WA] Message sent successfully to ${phone}`)
 
         // Mark as sent so it cannot be sent again
         await ref.update({ reminderSent: true, reminderSentAt: new Date().toISOString() })
+        console.log(`[Firestore] Record ${req.params.id} updated with reminderSent: true`)
 
         res.json({ success: true })
     } catch (e) {
+        console.error(`[WA] Error sending reminder:`, e)
         res.status(500).json({ error: e.message })
     }
 })
@@ -360,6 +373,6 @@ app.post('/api/wa/send-reminder/:id', authMiddleware, async (req, res) => {
 
 // ─── Start Server ─────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 4000
-app.listen(PORT, () => {
-    console.log(`✅ MotoMind backend running on http://localhost:${PORT}`)
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`✅ MotoMind backend running on http://0.0.0.0:${PORT}`)
 })

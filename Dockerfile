@@ -22,7 +22,6 @@ EXPOSE 4000
 
 # Puppeteer skip chromium download (already included in base image)
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
-ENV PUPPETEER_EXECUTABLE_PATH=/opt/google/chrome/chrome
 
 # Set writable data path for WhatsApp sessions
 ENV WWEBJS_AUTH_DIR=/app/data/.wwebjs_auth
