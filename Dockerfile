@@ -11,12 +11,11 @@ RUN mkdir -p /app/data/.wwebjs_auth && \
     chown -R pptruser:pptruser /app
 
 # Copy package files and install dependencies
-COPY --chown=pptruser:pptruser package*.json ./
-USER pptruser
+COPY package*.json ./
 RUN npm install --production
 
 # Copy all source code
-COPY --chown=pptruser:pptruser . .
+COPY . .
 
 # Expose the app port
 EXPOSE 4000
