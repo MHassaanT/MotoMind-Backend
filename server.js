@@ -156,8 +156,20 @@ async function authMiddleware(req, res, next) {
 
 // ─── App ──────────────────────────────────────────────────────────────────────
 const app = express()
-app.use(cors({ origin: '*' })) // Allow all origins to fix custom domain CORS issues
+
+// Explicitly handle all CORS scenarios
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'Accept']
+}))
+// Explicitly handle pre-flight OPTIONS for all routes
+app.options('*', cors())
+
 app.use(express.json())
+
+// Health check endpoint to verify backend is up without DB or Auth
+app.get('/api/ping', (req, res) => res.json({ status: 'ok', time: new Date() }))
 
 // ─── Records Routes ───────────────────────────────────────────────────────────
 
